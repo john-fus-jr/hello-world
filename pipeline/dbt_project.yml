@@ -1,0 +1,36 @@
+name: pipeline
+version: "1.0.0"
+profile: pipeline
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["data_tests"]
+seed-paths: ["seeds"]
+snapshot-paths: ["snapshots"]
+clean-targets: ["target", "dbt_packages"]
+
+flags:
+  send_anonymous_usage_stats: false   # no outbound telemetry from on-prem servers
+
+vars:
+  # Schema that receives one row per executed node (see macros/log_run_results.sql).
+  observability_schema: OBSERVABILITY
+
+# Persist every node's result to Snowflake so run history is queryable.
+on-run-end:
+  - "{{ log_run_results(results) }}"
+
+models:
+  pipeline:
+    +persist_docs: {relation: true, columns: true}
+    staging:
+      +schema: staging
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table
+
+data_tests:
+  pipeline:
+    +store_failures: true          # failing rows land in a *_dbt_test__audit schema for debugging
+    +schema: test_audit

@@ -1,0 +1,40 @@
+name: pipeline-ci
+
+on:
+  pull_request:
+    paths: ["pipeline/**", ".github/workflows/pipeline-ci.yml"]
+  push:
+    branches: [main]
+    paths: ["pipeline/**", ".github/workflows/pipeline-ci.yml"]
+
+jobs:
+  validate:
+    # Same OS as production, so path/encoding/PowerShell issues surface here first.
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: pipeline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Lint SQL
+        run: sqlfluff lint models data_tests
+      - name: Parse dbt project (no Snowflake connection needed)
+        run: dbt parse --profiles-dir . --warn-error
+      - name: Unit-test the runner
+        run: python -m pytest -q orchestration
+      - name: Syntax-check PowerShell scripts
+        shell: pwsh
+        run: |
+          $failed = $false
+          foreach ($f in Get-ChildItem scripts -Filter *.ps1) {
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errors) | Out-Null
+            if ($errors) { $errors | ForEach-Object { Write-Error "$($f.Name): $_" }; $failed = $true }
+          }
+          if ($failed) { exit 1 }

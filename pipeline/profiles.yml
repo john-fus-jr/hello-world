@@ -1,0 +1,22 @@
+# All secrets come from environment variables (loaded from .env by the runner).
+pipeline:
+  target: "{{ env_var('DBT_TARGET', 'dev') }}"
+  outputs:
+    dev: &snowflake
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT', 'unset') }}"
+      user: "{{ env_var('SNOWFLAKE_USER', 'unset') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'unset') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'unset') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'unset') }}"
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH', '') }}"
+      private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE', '') }}"
+      schema: "{{ env_var('DBT_DEV_SCHEMA', 'DBT_DEV') }}"
+      threads: "{{ env_var('DBT_THREADS', '8') | int }}"
+      client_session_keep_alive: false
+      connect_retries: 3
+      connect_timeout: 30
+      reuse_connections: true
+    prod:
+      <<: *snowflake
+      schema: PUBLIC

@@ -1,0 +1,4 @@
+# Runtime dependencies — pinned for reproducible on-prem deploys.
+dbt-core==1.12.5
+dbt-snowflake==1.12.1
+python-dotenv==1.2.4

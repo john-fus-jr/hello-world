@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: >
+      One row per order. Incremental: each run re-processes only the last
+      `orders_lookback_days` of orders and merges them on order_key.
+    columns:
+      - name: order_key
+        data_tests: [unique, not_null]
+      - name: customer_key
+        data_tests: [not_null]
+      - name: order_date
+        description: Incremental watermark column.
+      - name: total_price
+        data_tests: [non_negative]
+      - name: updated_at
+        description: When this row was last written by dbt.
+
+  - name: dim_customers
+    description: One row per customer with lifetime order metrics.
+    columns:
+      - name: customer_key
+        data_tests: [unique, not_null]
+      - name: lifetime_value
+        data_tests: [non_negative]

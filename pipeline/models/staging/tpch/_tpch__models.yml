@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: stg_tpch__orders
+    description: One row per order, renamed and typed.
+    columns:
+      - name: order_key
+        data_tests: [unique, not_null]
+      - name: customer_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('stg_tpch__customers'), field: customer_key}
+      - name: order_status
+        data_tests:
+          - accepted_values:
+              arguments: {values: ['open', 'fulfilled', 'partial']}
+
+  - name: stg_tpch__customers
+    description: One row per customer.
+    columns:
+      - name: customer_key
+        data_tests: [unique, not_null]
+
+  - name: stg_tpch__nations
+    description: One row per nation.
+    columns:
+      - name: nation_key
+        data_tests: [unique, not_null]
